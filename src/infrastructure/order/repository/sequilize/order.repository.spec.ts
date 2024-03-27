@@ -18,12 +18,11 @@ describe("Order repository test", () => {
   beforeEach(async () => {
     sequelize = new Sequelize({
       dialect: "sqlite",
-      storage: ":memory:",
       logging: false,
       sync: { force: true },
     });
 
-    await sequelize.addModels([
+    sequelize.addModels([
       CustomerModel,
       OrderModel,
       OrderItemModel,
@@ -32,7 +31,7 @@ describe("Order repository test", () => {
     await sequelize.sync();
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await sequelize.close();
   });
 
@@ -86,7 +85,7 @@ describe("Order repository test", () => {
     const orderRepository = new OrderRepository();
     const productRepository = new ProductRepository();
     const customerRepository = new CustomerRepository();
-    
+
     const customer = new Customer("123", "Customer 1");
     const address = new Address("Street 1", 1, "Zipcode 1", "City 1");
     customer.changeAddress(address);
@@ -114,7 +113,7 @@ describe("Order repository test", () => {
     const orderRepository = new OrderRepository();
     const productRepository = new ProductRepository();
     const customerRepository = new CustomerRepository();
-    
+
     const customer1 = new Customer("123", "Customer 1");
     const address1 = new Address("Street 1", 1, "Zipcode 1", "City 1");
     customer1.changeAddress(address1);
@@ -155,5 +154,51 @@ describe("Order repository test", () => {
     expect(orders).toHaveLength(2);
     expect(orders).toContainEqual(order1);
     expect(orders).toContainEqual(order2);
+  });
+
+  it("should update an order", async () => {
+    const orderRepository = new OrderRepository();
+    const productRepository = new ProductRepository();
+    const customerRepository = new CustomerRepository();
+
+    const customer = new Customer("123", "Customer 1");
+    const address = new Address("Street 1", 1, "Zipcode 1", "City 1");
+    customer.changeAddress(address);
+    await customerRepository.create(customer);
+
+    const product = new Product("123", "Product 1", 10);
+    const product2 = new Product("456", "Product 2", 20);
+    await productRepository.create(product);
+    await productRepository.create(product2);
+
+    const orderItem = new OrderItem(
+      "10",
+      product.name,
+      product.price,
+      product.id,
+      2
+    );
+
+    const orderItem2 = new OrderItem(
+      "11",
+      product2.name,
+      product2.price,
+      product2.id,
+      5
+    );
+
+    const order = new Order("9", "123", [orderItem]);
+
+    await orderRepository.create(order);
+
+    const items1 = await OrderItemModel.findAll({ where: { order_id: "9" }});
+    expect(items1).toHaveLength(1);
+
+    order.addItem(orderItem2);
+
+    await orderRepository.update(order);
+
+    const items2 = await OrderItemModel.findAll({ where: { order_id: "9" }});
+    expect(items2).toHaveLength(2);
   });
 });

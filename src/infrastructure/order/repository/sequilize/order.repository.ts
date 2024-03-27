@@ -6,7 +6,28 @@ import OrderModel from "./order.model";
 
 export default class OrderRepository implements OrderRepositoryInterface {
   async update(entity: Order): Promise<void> {
-    throw new Error("Method not implemented.");
+    let orderModel;
+    try {
+      orderModel = await OrderModel.findOne({
+        where: {
+          id: entity.id,
+        },
+        rejectOnEmpty: true,
+      });
+    } catch (error) {
+      throw new Error("Order not found");
+    }
+
+    entity.items.forEach(async (item) => {
+      await OrderItemModel.upsert({
+        id: item.id,
+        product_id: item.productId,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        order_id: entity.id
+      });
+    });
   }
 
   async find(id: string): Promise<Order> {
@@ -39,7 +60,7 @@ export default class OrderRepository implements OrderRepositoryInterface {
   }
 
   async findAll(): Promise<Order[]> {
-    const orderModels = await OrderModel.findAll({include: ["items"]});
+    const orderModels = await OrderModel.findAll({ include: ["items"] });
 
     const orders = orderModels.map((order) => new Order(
       order.id,
