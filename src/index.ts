@@ -1,11 +1,11 @@
 import { Mediator } from "./domain/@shared/service/mediator";
-import { CustomerCreated } from "./domain/customer/entity/customer-created.event";
-import { SendMailListener } from "./domain/customer/listeners/send-mail.listener";
+import { CustomerCreated } from "./domain/customer/event/customer-created.event";
+import { SendMailHandler } from "./domain/customer/event/handler/send-mail.handler";
 
 const mediator = new Mediator();
 
-const sendMailListener = new SendMailListener();
+const sendMailHandler = new SendMailHandler();
 
 mediator.register(CustomerCreated.name, (event: CustomerCreated) => {
-    sendMailListener.handle(event)
+    sendMailHandler.handle(event)
 })
